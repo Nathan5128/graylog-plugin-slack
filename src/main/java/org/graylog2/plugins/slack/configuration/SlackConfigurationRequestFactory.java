@@ -129,6 +129,21 @@ public class SlackConfigurationRequestFactory {
         );
 
         configurationRequest.addField(new TextField(
+                SlackConfiguration.CK_BACKLOG_ITEM_MESSAGE, "Backlog item message",
+                "${backlog_item}",
+                "Template that is added as attachment to the slack message for each backlog item. " +
+                        "The following properties are available for template building: " +
+                        "\"stream\", " +
+                        " \"stream_url\"," +
+                        " \"backlog_item\"," +
+                        "See http://docs.graylog.org/en/2.3/pages/streams/alerts.html#email-alert-notification for more details. " +
+                        "Slack recommends to have no more than 20 attachments and throws an error when attempting to include more than 100. " +
+                        "So don't use a too high backlog items number. Also consider that other parts of the slack notification may use attachments!",
+                ConfigurationField.Optional.OPTIONAL,
+                TextField.Attribute.TEXTAREA)
+        );
+
+        configurationRequest.addField(new TextField(
                 SlackConfiguration.CK_WEBHOOK_URL, "Webhook URL", "", "Slack \"Incoming Webhook\" URL",
                 ConfigurationField.Optional.NOT_OPTIONAL)
         );

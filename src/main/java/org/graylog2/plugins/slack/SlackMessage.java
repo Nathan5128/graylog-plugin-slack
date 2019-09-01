@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ public class SlackMessage {
     private final boolean linkNames;
     private final List<AttachmentField> detailFields;
     private String customMessage;
+    private List<String> backlogItemMessages = Collections.emptyList();
 
     public SlackMessage(
             String color,
@@ -79,6 +81,19 @@ public class SlackMessage {
             attachments.add(attachment);
         }
 
+        for (String backlogItemMessage : backlogItemMessages) {
+            if(!isNullOrEmpty(backlogItemMessage)) {
+                final Attachment attachment = new Attachment(
+                        color,
+                        backlogItemMessage,
+                        "Backlog Item Message",
+                        null,
+                        null
+                );
+                attachments.add(attachment);
+            }
+        }
+
         if (!detailFields.isEmpty()) {
             final Attachment attachment = new Attachment(
                     color,
@@ -107,6 +122,10 @@ public class SlackMessage {
 
     public void setCustomMessage(String customMessage) {
         this.customMessage = customMessage;
+    }
+
+    public void setBacklogItemMessages(List<String> backlogItemMessages) {
+        this.backlogItemMessages = backlogItemMessages;
     }
 
     private String ensureEmojiSyntax(final String x) {

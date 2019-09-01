@@ -15,4 +15,5 @@ public class SlackConfiguration {
     public static final String CK_ADD_BLITEMS = "backlog_items";
     public static final String CK_CUSTOM_MESSAGE = "custom_message";
     public static final String CK_ADD_DETAILS = "add_details";
+    public static final String CK_BACKLOG_ITEM_MESSAGE = "message_attachment";
 }

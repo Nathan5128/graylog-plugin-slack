@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -57,6 +58,14 @@ public class SlackAlarmCallback extends SlackPluginBase implements AlarmCallback
             slackMessage.setCustomMessage(customMessage);
         }
 
+        // Add backlogItem message
+        String backlogItemTemplate = configuration.getString(SlackConfiguration.CK_BACKLOG_ITEM_MESSAGE);
+        boolean hasBacklogItemTemplate = !isNullOrEmpty(backlogItemTemplate);
+        if(hasBacklogItemTemplate) {
+            List<String> backlogItemMessages = buildBacklogItemMessages(stream, result, template);
+            slackMessage.setBacklogItemMessages(backlogItemMessages);
+        }
+
         try {
             client.send(slackMessage);
         } catch (SlackClient.SlackClientException e) {
@@ -82,12 +91,24 @@ public class SlackAlarmCallback extends SlackPluginBase implements AlarmCallback
 
     private String buildCustomMessage(Stream stream, AlertCondition.CheckResult result, String template) {
         List<Message> backlog = getAlarmBacklog(result);
-        Map<String, Object> model = getModel(stream, result, backlog);
+        Map<String, Object> model = getCustomMessageModel(stream, result, backlog);
         try {
             return templateEngine.transform(template, model);
         } catch (Exception ex) {
             return ex.toString();
         }
+    }
+
+    private List<String> buildBacklogItemMessages(Stream stream, AlertCondition.CheckResult result, String template) {
+        return getAlarmBacklog(result).stream()
+                .map(backlogItem -> {
+                    Map<String, Object> model = getBacklogItemModel(stream, backlogItem);
+                    try {
+                        return templateEngine.transform(template, model);
+                    } catch (Exception ex) {
+                        return ex.toString();
+                    }
+                }).collect(Collectors.toList());
     }
 
     private List<Message> getAlarmBacklog(AlertCondition.CheckResult result) {
@@ -105,7 +126,7 @@ public class SlackAlarmCallback extends SlackPluginBase implements AlarmCallback
         return backlog;
     }
 
-    private Map<String, Object> getModel(Stream stream, AlertCondition.CheckResult result, List<Message> backlog) {
+    private Map<String, Object> getCustomMessageModel(Stream stream, AlertCondition.CheckResult result, List<Message> backlog) {
         Map<String, Object> model = new HashMap<>();
         String graylogUri = configuration.getString(SlackConfiguration.CK_GRAYLOG2_URL);
         model.put("stream", stream);
@@ -113,6 +134,18 @@ public class SlackAlarmCallback extends SlackPluginBase implements AlarmCallback
         model.put("alert_condition", result.getTriggeredCondition());
         model.put("backlog", backlog);
         model.put("backlog_size", backlog.size());
+        if (!isNullOrEmpty(graylogUri)) {
+            model.put("stream_url", buildStreamLink(graylogUri, stream));
+        }
+
+        return model;
+    }
+
+    private Map<String, Object> getBacklogItemModel(Stream stream, Message backlog_item) {
+        Map<String, Object> model = new HashMap<>();
+        String graylogUri = configuration.getString(SlackConfiguration.CK_GRAYLOG2_URL);
+        model.put("stream", stream);
+        model.put("backlog_item", backlog_item);
         if (!isNullOrEmpty(graylogUri)) {
             model.put("stream_url", buildStreamLink(graylogUri, stream));
         }
